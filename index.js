@@ -1,6 +1,6 @@
 const express = require("express")
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const app = express();
 const port = process.env.PORT || 5555
@@ -37,6 +37,14 @@ async function run() {
         res.send(result);
     })
 
+    app.get("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const user = await userCollection.findOne(query)
+      console.log(user);
+      res.send(user)
+    })
+
 
     app.post('/users', async (req, res) => {
         const user = req.body;
@@ -45,7 +53,33 @@ async function run() {
         res.send(result)
     })
 
+    app.put('/users/:id', async (req, res) => {
+      const id = req.params.id;
+      const user = req.body;
+      console.log(user);
 
+      const filter = { _id: new ObjectId(id) }
+      const option = { upsert: true }
+      const updatedUser = {
+        $set: {
+          name: user.name,
+          email: user.email
+        }
+      } 
+
+      const result = await userCollection.updateOne(filter, updatedUser, option)
+      res.send(result)
+
+    })
+
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      
+      const query =  { _id: new ObjectId(id) }
+      const result = await userCollection.deleteOne(query);
+      res.send(result)
+
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
